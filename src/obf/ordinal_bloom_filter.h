@@ -7,12 +7,11 @@
 #include <stdexcept>
 
 #include "MurmurHash3.h"
-#include "bloom_filter.h"
 
 namespace obf {
 
 template <typename T>
-class OrdinalBloomFilter : public BloomFilter<T> {
+class OrdinalBloomFilter {
   using elem_type = std::uint8_t;
 
  public:
@@ -25,9 +24,9 @@ class OrdinalBloomFilter : public BloomFilter<T> {
   OrdinalBloomFilter& operator=(OrdinalBloomFilter&& rhs) noexcept;
   ~OrdinalBloomFilter();
 
-  void clear() override;
-  void add(const T& elem) override;
-  bool contains(const T& elem) const override;
+  void clear();
+  void add(const T& elem);
+  bool contains(const T& elem) const;
   void swap(OrdinalBloomFilter& rhs);
 
  private:
