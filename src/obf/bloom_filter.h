@@ -12,6 +12,7 @@ namespace obf {
 
 template <typename T>
 class BloomFilter {
+  // only 1 bit is used.
   using elem_type = std::uint8_t;
 
  public:
@@ -93,7 +94,7 @@ template <typename T>
 void BloomFilter<T>::add(const T& elem) {
   for (size_type i = 0; i < _hash_func_num; ++i) {
     size_type hash_val = hash_at_n(&elem, i);
-    _bits[i] |= (1 << hash_val % 8);
+    _bits[hash_val] |= 1;
   }
 }
 
@@ -101,7 +102,7 @@ template <typename T>
 bool BloomFilter<T>::contains(const T& elem) const {
   for (size_type i = 0; i < _hash_func_num; ++i) {
     size_type hash_val = hash_at_n(&elem, i);
-    if (!(_bits[i] & (1 << hash_val % 8))) {
+    if (!(_bits[hash_val] & 1)) {
       return false;
     }
   }

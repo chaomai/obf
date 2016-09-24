@@ -15,7 +15,7 @@ using std::string;
 
 TEST(BloomFilter, default_constructor) {
   BloomFilter<string> bf(false_positive, capacity);
-  ASSERT_THROW(BloomFilter<string> bf(10, 3), range_error);
+  ASSERT_THROW(BloomFilter<string>(10, 3), range_error);
 }
 
 TEST(BloomFilter, move_constructor) {
@@ -99,6 +99,24 @@ TEST(BloomFilter, massive_insert_and_contains) {
 
   for (int i = 0; i < iteration_num; ++i) {
     ASSERT_TRUE(bf.contains(i));
+  }
+
+  for (int i = 1; i < 5; ++i) {
+    int true_count = 0;
+    int false_positive_count = 0;
+
+    for (int j = iteration_num * i; j < iteration_num * (i + 1); ++j) {
+      if (bf.contains(j)) {
+        ++false_positive_count;
+      } else {
+        ++true_count;
+      }
+    }
+
+    cout << "true count: " << true_count << endl;
+    cout << "false positive count:" << false_positive_count << endl;
+    cout << "false positive rate:" << false_positive_count / iteration_num
+         << endl;
   }
 }
 
