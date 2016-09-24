@@ -1,5 +1,5 @@
-#ifndef OBF_ORDINAL_BLOOM_FILTER_H_
-#define OBF_ORDINAL_BLOOM_FILTER_H_
+#ifndef OBF_BASIC_BLOOM_FILTER_H_
+#define OBF_BASIC_BLOOM_FILTER_H_
 
 #include <cmath>
 #include <cstddef>  // for size_t
@@ -12,26 +12,26 @@
 namespace obf {
 
 template <typename T>
-class OrdinalBloomFilter : public BloomFilter<T> {
+class BasicBloomFilter : public BloomFilter<T> {
+  // only 1 bit is used.
   using elem_type = std::uint8_t;
 
  public:
   using size_type = std::uint64_t;
 
-  OrdinalBloomFilter(double false_positive, size_type capacity);
-  OrdinalBloomFilter(const OrdinalBloomFilter& rhs) = delete;
-  OrdinalBloomFilter(OrdinalBloomFilter&& rhs) noexcept;
-  OrdinalBloomFilter& operator=(const OrdinalBloomFilter& rhs) = delete;
-  OrdinalBloomFilter& operator=(OrdinalBloomFilter&& rhs) noexcept;
-  ~OrdinalBloomFilter();
+  BasicBloomFilter(double false_positive, size_type capacity);
+  BasicBloomFilter(const BasicBloomFilter& rhs) = delete;
+  BasicBloomFilter(BasicBloomFilter&& rhs) noexcept;
+  BasicBloomFilter& operator=(const BasicBloomFilter& rhs) = delete;
+  BasicBloomFilter& operator=(BasicBloomFilter&& rhs) noexcept;
+  ~BasicBloomFilter();
 
   void clear() override;
   void add(const T& elem) override;
   bool contains(const T& elem) const override;
-  void swap(OrdinalBloomFilter& rhs);
+  void swap(BasicBloomFilter& rhs);
 
  private:
-  // the max number of hash function is 2 ^ 8, which shouble be big enough.
   elem_type* _bits;
   size_type _bit_array_size;
   size_type _hash_func_num;
@@ -40,8 +40,8 @@ class OrdinalBloomFilter : public BloomFilter<T> {
 };
 
 template <typename T>
-OrdinalBloomFilter<T>::OrdinalBloomFilter(double false_positive,
-                                          size_type capacity) {
+BasicBloomFilter<T>::BasicBloomFilter(double false_positive,
+                                      size_type capacity) {
   if (false_positive <= 0 || false_positive >= 1) {
     throw std::range_error("false positive is invalie.");
   }
@@ -58,7 +58,7 @@ OrdinalBloomFilter<T>::OrdinalBloomFilter(double false_positive,
 }
 
 template <typename T>
-OrdinalBloomFilter<T>::OrdinalBloomFilter(OrdinalBloomFilter&& rhs) noexcept
+BasicBloomFilter<T>::BasicBloomFilter(BasicBloomFilter&& rhs) noexcept
     : _bits(rhs._bits),
       _bit_array_size(rhs._bit_array_size),
       _hash_func_num(rhs._hash_func_num) {
@@ -68,8 +68,8 @@ OrdinalBloomFilter<T>::OrdinalBloomFilter(OrdinalBloomFilter&& rhs) noexcept
 }
 
 template <typename T>
-OrdinalBloomFilter<T>& OrdinalBloomFilter<T>::operator=(
-    OrdinalBloomFilter&& rhs) noexcept {
+BasicBloomFilter<T>& BasicBloomFilter<T>::operator=(
+    BasicBloomFilter&& rhs) noexcept {
   if (this != &rhs) {
     _bits = rhs._bits;
     _bit_array_size = rhs._bit_array_size;
@@ -83,33 +83,29 @@ OrdinalBloomFilter<T>& OrdinalBloomFilter<T>::operator=(
 }
 
 template <typename T>
-OrdinalBloomFilter<T>::~OrdinalBloomFilter() {
+BasicBloomFilter<T>::~BasicBloomFilter() {
   delete[] _bits;
 }
 
 template <typename T>
-void OrdinalBloomFilter<T>::clear() {
+void BasicBloomFilter<T>::clear() {
   delete[] _bits;
   _bits = new elem_type[_bit_array_size]();
 }
 
 template <typename T>
-void OrdinalBloomFilter<T>::add(const T& elem) {
-  for (size_type i = 1; i <= _hash_func_num; ++i) {
+void BasicBloomFilter<T>::add(const T& elem) {
+  for (size_type i = 0; i < _hash_func_num; ++i) {
     size_type hash_val = hash_at_n(&elem, i);
-
-    if (_bits[hash_val] < i) {
-      _bits[hash_val] = static_cast<elem_type>(i);
-    }
+    _bits[hash_val] |= 1;
   }
 }
 
 template <typename T>
-bool OrdinalBloomFilter<T>::contains(const T& elem) const {
-  for (size_type i = 1; i <= _hash_func_num; ++i) {
+bool BasicBloomFilter<T>::contains(const T& elem) const {
+  for (size_type i = 0; i < _hash_func_num; ++i) {
     size_type hash_val = hash_at_n(&elem, i);
-
-    if (_bits[hash_val] < i) {
+    if (!(_bits[hash_val] & 1)) {
       return false;
     }
   }
@@ -117,7 +113,7 @@ bool OrdinalBloomFilter<T>::contains(const T& elem) const {
 }
 
 template <typename T>
-void OrdinalBloomFilter<T>::swap(OrdinalBloomFilter& rhs) {
+void BasicBloomFilter<T>::swap(BasicBloomFilter& rhs) {
   using std::swap;
   swap(_bits, rhs._bits);
   swap(_bit_array_size, rhs._bit_array_size);
@@ -125,7 +121,7 @@ void OrdinalBloomFilter<T>::swap(OrdinalBloomFilter& rhs) {
 }
 
 template <typename T>
-typename OrdinalBloomFilter<T>::size_type OrdinalBloomFilter<T>::hash_at_n(
+typename BasicBloomFilter<T>::size_type BasicBloomFilter<T>::hash_at_n(
     const T* p, size_type n) const {
   size_type hash_val[2];
   MurmurHash3_x64_128(p, sizeof(T), 0, hash_val);
@@ -137,4 +133,4 @@ typename OrdinalBloomFilter<T>::size_type OrdinalBloomFilter<T>::hash_at_n(
 }
 }
 
-#endif  // OBF_ORDINAL_BLOOM_FILTER_H_
+#endif  // OBF_BAISC_BLOOM_FILTER_H_
