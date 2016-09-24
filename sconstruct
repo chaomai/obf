@@ -2,9 +2,14 @@ import contextlib
 import os
 import subprocess
 
+cwd = os.getcwd()
+
 # common variables
-googletest_build_dir = '/home/chaomai/Documents/Codes/Current/GitHub/obf/third_party/googletest/googletest/build'
-googletest_include_dir = '/home/chaomai/Documents/Codes/Current/GitHub/obf/third_party/googletest/googletest/include'
+obf_dir = os.path.join(cwd, 'src')
+googletest_build_dir = os.path.join(cwd, \
+                                    'third_party/googletest/googletest/build')
+googletest_include_dir = os.path.join(cwd, \
+                                      'third_party/googletest/googletest/include')
 doxygen_dir = 'build/doxygen'
 
 # helper functions
@@ -78,7 +83,7 @@ if target == DEBUG:
     env = debug_env
 
     test_debug_env = debug_env.Clone()
-    test_debug_env.Append(CPPPATH=googletest_include_dir)
+    test_debug_env.Append(CPPPATH=[googletest_include_dir, obf_dir])
     test_debug_env.Append(LIBS='libgtest.a')
     test_debug_env.Append(LIBPATH=googletest_build_dir)
 
@@ -88,12 +93,12 @@ elif target == RELEASE:
     mode_dir = 'build/release'
     env = release_env
 
-    test_release_env = debug_env.Clone()
-    test_release_env.Append(CPPPATH=googletest_include_dir)
+    test_release_env = release_env.Clone()
+    test_release_env.Append(CPPPATH=[googletest_include_dir, obf_dir])
     test_release_env.Append(LIBS='libgtest.a')
     test_release_env.Append(LIBPATH=googletest_build_dir)
 
-    env.SConscript('%s/test/sconscript' % mode_dir, {'env': env})
+    env.SConscript('%s/test/sconscript' % mode_dir, {'env': test_release_env})
 
 # clean
 
