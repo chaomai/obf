@@ -19,10 +19,10 @@ class BloomFilter {
 
   BloomFilter(double false_positive, size_type capacity);
   BloomFilter(const BloomFilter& rhs) = delete;
-  BloomFilter(BloomFilter&& rhs);
+  BloomFilter(BloomFilter&& rhs) noexcept;
   BloomFilter& operator=(const BloomFilter& rhs) = delete;
-  BloomFilter& operator=(BloomFilter&& rhs);
-  ~BloomFilter() = default;
+  BloomFilter& operator=(BloomFilter&& rhs) noexcept;
+  ~BloomFilter();
 
   void clear();
   void add(const T& elem);
@@ -30,8 +30,8 @@ class BloomFilter {
   void swap(BloomFilter& rhs);
 
  private:
-  std::unique_ptr<elem_type[]> _bits;
-  size_type _size;
+  elem_type* _bits;
+  size_type _bit_array_size;
   size_type _hash_func_num;
 
   inline size_type hash_at_n(const T* p, size_type n) const;
@@ -44,45 +44,54 @@ BloomFilter<T>::BloomFilter(double false_positive, size_type capacity) {
   }
 
   double ln2 = std::log(2);
-  _size = static_cast<size_type>(
+  _bit_array_size = static_cast<size_type>(
       std::ceil(-(capacity * std::log(false_positive) / (ln2 * ln2))));
 
-  _bits.reset(new elem_type[_size]);
+  _bits = new elem_type[_bit_array_size]();
 
-  double fractor = static_cast<double>(_size) / static_cast<double>(capacity);
-  _hash_func_num = static_cast<size_type>(std::ceil(fractor * ln2));
+  double fractor =
+      static_cast<double>(_bit_array_size) / static_cast<double>(capacity);
+  _hash_func_num = static_cast<size_type>(std::round(fractor * ln2));
 }
 
 template <typename T>
-BloomFilter<T>::BloomFilter(BloomFilter&& rhs)
-    : _bits(rhs._bits.release()),
-      _size(rhs._size),
+BloomFilter<T>::BloomFilter(BloomFilter&& rhs) noexcept
+    : _bits(rhs._bits),
+      _bit_array_size(rhs._bit_array_size),
       _hash_func_num(rhs._hash_func_num) {
-  rhs._size = 0;
+  rhs._bits = nullptr;
+  rhs._bit_array_size = 0;
   rhs._hash_func_num = 0;
 }
 
 template <typename T>
-BloomFilter<T>& BloomFilter<T>::operator=(BloomFilter&& rhs) {
+BloomFilter<T>& BloomFilter<T>::operator=(BloomFilter&& rhs) noexcept {
   if (this != &rhs) {
-    _bits.reset(rhs._bits.release());
-    _size = rhs._size;
+    _bits = rhs._bits;
+    _bit_array_size = rhs._bit_array_size;
     _hash_func_num = rhs._hash_func_num;
 
-    rhs._size = 0;
+    rhs._bits = nullptr;
+    rhs._bit_array_size = 0;
     rhs._hash_func_num = 0;
   }
   return *this;
 }
 
 template <typename T>
+BloomFilter<T>::~BloomFilter() {
+  delete[] _bits;
+}
+
+template <typename T>
 void BloomFilter<T>::clear() {
-  _bits.reset(new elem_type[_size]);
+  delete[] _bits;
+  _bits = new elem_type[_bit_array_size]();
 }
 
 template <typename T>
 void BloomFilter<T>::add(const T& elem) {
-  for (size_type i = 0; i < _size; ++i) {
+  for (size_type i = 0; i < _hash_func_num; ++i) {
     size_type hash_val = hash_at_n(&elem, i);
     _bits[i] |= (1 << hash_val % 8);
   }
@@ -90,7 +99,7 @@ void BloomFilter<T>::add(const T& elem) {
 
 template <typename T>
 bool BloomFilter<T>::contains(const T& elem) const {
-  for (size_type i = 0; i < _size; ++i) {
+  for (size_type i = 0; i < _hash_func_num; ++i) {
     size_type hash_val = hash_at_n(&elem, i);
     if (!(_bits[i] & (1 << hash_val % 8))) {
       return false;
@@ -103,7 +112,7 @@ template <typename T>
 void BloomFilter<T>::swap(BloomFilter& rhs) {
   using std::swap;
   swap(_bits, rhs._bits);
-  swap(_size, rhs._size);
+  swap(_bit_array_size, rhs._bit_array_size);
   swap(_hash_func_num, rhs._hash_func_num);
 }
 
@@ -116,7 +125,7 @@ typename BloomFilter<T>::size_type BloomFilter<T>::hash_at_n(
   size_type hash_a = hash_val[0];
   size_type hash_b = hash_val[1];
 
-  return (hash_a + n * hash_b) % _size;
+  return (hash_a + n * hash_b) % _bit_array_size;
 }
 }
 

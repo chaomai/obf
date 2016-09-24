@@ -14,13 +14,13 @@ using std::range_error;
 using std::string;
 
 TEST(BloomFilter, default_constructor) {
-  BloomFilter<string> bf(0.9, 100);
+  BloomFilter<string> bf(false_positive, capacity);
   ASSERT_THROW(BloomFilter<string> bf(10, 3), range_error);
 }
 
 TEST(BloomFilter, move_constructor) {
   string vals[] = {"a", "b", "c"};
-  BloomFilter<string> bf(0.9, 100);
+  BloomFilter<string> bf(false_positive, capacity);
 
   for (const string& str : vals) {
     bf.add(str);
@@ -35,7 +35,7 @@ TEST(BloomFilter, move_constructor) {
 
 TEST(BloomFilter, move_assign_constructor) {
   string vals[] = {"a", "b", "c"};
-  BloomFilter<string> bf(0.9, 100);
+  BloomFilter<string> bf(false_positive, capacity);
 
   for (const string& str : vals) {
     bf.add(str);
@@ -50,7 +50,7 @@ TEST(BloomFilter, move_assign_constructor) {
 
 TEST(BloomFilter, clear) {
   string vals[] = {"a", "b", "c"};
-  BloomFilter<string> bf(0.9, 100);
+  BloomFilter<string> bf(false_positive, capacity);
 
   for (const string& str : vals) {
     bf.add(str);
@@ -65,7 +65,7 @@ TEST(BloomFilter, clear) {
 
 TEST(BloomFilter, basic_insert_and_contains_string) {
   string vals[] = {"a", "b", "c"};
-  BloomFilter<string> bf(0.9, 100);
+  BloomFilter<string> bf(false_positive, capacity);
 
   for (const string& str : vals) {
     bf.add(str);
@@ -79,7 +79,7 @@ TEST(BloomFilter, basic_insert_and_contains_string) {
 }
 
 TEST(BloomFilter, basic_insert_and_contains_int) {
-  BloomFilter<int> bf(0.9, 100);
+  BloomFilter<int> bf(false_positive, capacity);
 
   for (int i = 0; i < 3; ++i) {
     bf.add(i);
@@ -91,7 +91,7 @@ TEST(BloomFilter, basic_insert_and_contains_int) {
 }
 
 TEST(BloomFilter, massive_insert_and_contains) {
-  BloomFilter<int> bf(0.9, 10000);
+  BloomFilter<int> bf(false_positive, capacity);
 
   for (int i = 0; i < iteration_num; ++i) {
     bf.add(i);
@@ -104,13 +104,13 @@ TEST(BloomFilter, massive_insert_and_contains) {
 
 TEST(BloomFilter, swap) {
   string vals[] = {"a", "b", "c"};
-  BloomFilter<string> bf(0.9, 100);
+  BloomFilter<string> bf(false_positive, capacity);
 
   for (const string& str : vals) {
     bf.add(str);
   }
 
-  BloomFilter<string> bf1(0.5, 10);
+  BloomFilter<string> bf1(false_positive, capacity);
   bf.swap(bf1);
 
   for (const string& str : vals) {
