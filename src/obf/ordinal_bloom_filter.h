@@ -53,7 +53,8 @@ OrdinalBloomFilter<T>::OrdinalBloomFilter(double false_positive,
 
   double fractor =
       static_cast<double>(_bit_array_size) / static_cast<double>(capacity);
-  _hash_func_num = static_cast<size_type>(std::ceil(std::log2(fractor * ln2)));
+  _hash_func_num = static_cast<size_type>(
+      std::pow(2.0, std::ceil(std::log2(fractor * ln2))));
 }
 
 template <typename T>
