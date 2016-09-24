@@ -7,12 +7,11 @@
 #include <stdexcept>
 
 #include "MurmurHash3.h"
-#include "bloom_filter.h"
 
 namespace obf {
 
 template <typename T>
-class BasicBloomFilter : public BloomFilter<T> {
+class BasicBloomFilter {
   // only 1 bit is used.
   using elem_type = std::uint8_t;
 
@@ -26,9 +25,9 @@ class BasicBloomFilter : public BloomFilter<T> {
   BasicBloomFilter& operator=(BasicBloomFilter&& rhs) noexcept;
   ~BasicBloomFilter();
 
-  void clear() override;
-  void add(const T& elem) override;
-  bool contains(const T& elem) const override;
+  void clear();
+  void add(const T& elem);
+  bool contains(const T& elem) const;
   void swap(BasicBloomFilter& rhs);
 
  private:
