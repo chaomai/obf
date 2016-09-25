@@ -5,6 +5,7 @@
 #include <cstddef>  // for size_t
 #include <cstdint>  // for uint8_t
 #include <stdexcept>
+#include <vector>
 
 #include "MurmurHash3.h"
 
@@ -22,7 +23,7 @@ class OrdinalBloomFilter {
   OrdinalBloomFilter(OrdinalBloomFilter&& rhs) noexcept;
   OrdinalBloomFilter& operator=(const OrdinalBloomFilter& rhs) = delete;
   OrdinalBloomFilter& operator=(OrdinalBloomFilter&& rhs) noexcept;
-  ~OrdinalBloomFilter();
+  ~OrdinalBloomFilter() = default;
 
   void clear();
   void add(const T& elem);
@@ -31,7 +32,7 @@ class OrdinalBloomFilter {
 
  private:
   // the max number of hash function is 2 ^ 8, which shouble be big enough.
-  elem_type* _bits;
+  std::vector<elem_type> _bits;
   size_type _bit_array_size;
   size_type _hash_func_num;
 
@@ -49,7 +50,7 @@ OrdinalBloomFilter<T>::OrdinalBloomFilter(double false_positive,
   _bit_array_size = static_cast<size_type>(
       std::ceil(-(capacity * std::log(false_positive) / (ln2 * ln2))));
 
-  _bits = new elem_type[_bit_array_size]();
+  _bits = std::vector<elem_type>(_bit_array_size, 0);
 
   double fractor =
       static_cast<double>(_bit_array_size) / static_cast<double>(capacity);
@@ -58,10 +59,9 @@ OrdinalBloomFilter<T>::OrdinalBloomFilter(double false_positive,
 
 template <typename T>
 OrdinalBloomFilter<T>::OrdinalBloomFilter(OrdinalBloomFilter&& rhs) noexcept
-    : _bits(rhs._bits),
+    : _bits(std::move(rhs._bits)),
       _bit_array_size(rhs._bit_array_size),
       _hash_func_num(rhs._hash_func_num) {
-  rhs._bits = nullptr;
   rhs._bit_array_size = 0;
   rhs._hash_func_num = 0;
 }
@@ -70,11 +70,10 @@ template <typename T>
 OrdinalBloomFilter<T>& OrdinalBloomFilter<T>::operator=(
     OrdinalBloomFilter&& rhs) noexcept {
   if (this != &rhs) {
-    _bits = rhs._bits;
+    _bits = std::move(rhs._bits);
     _bit_array_size = rhs._bit_array_size;
     _hash_func_num = rhs._hash_func_num;
 
-    rhs._bits = nullptr;
     rhs._bit_array_size = 0;
     rhs._hash_func_num = 0;
   }
@@ -82,14 +81,9 @@ OrdinalBloomFilter<T>& OrdinalBloomFilter<T>::operator=(
 }
 
 template <typename T>
-OrdinalBloomFilter<T>::~OrdinalBloomFilter() {
-  delete[] _bits;
-}
-
-template <typename T>
 void OrdinalBloomFilter<T>::clear() {
-  delete[] _bits;
-  _bits = new elem_type[_bit_array_size]();
+  _bits.clear();
+  _bits = std::vector<elem_type>(_bit_array_size, 0);
 }
 
 template <typename T>
