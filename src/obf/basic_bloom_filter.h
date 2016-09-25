@@ -5,6 +5,7 @@
 #include <cstddef>  // for size_t
 #include <cstdint>  // for uint8_t
 #include <stdexcept>
+#include <vector>
 
 #include "MurmurHash3.h"
 
@@ -12,9 +13,6 @@ namespace obf {
 
 template <typename T>
 class BasicBloomFilter {
-  // only 1 bit is used.
-  using elem_type = std::uint8_t;
-
  public:
   using size_type = std::uint64_t;
 
@@ -23,7 +21,7 @@ class BasicBloomFilter {
   BasicBloomFilter(BasicBloomFilter&& rhs) noexcept;
   BasicBloomFilter& operator=(const BasicBloomFilter& rhs) = delete;
   BasicBloomFilter& operator=(BasicBloomFilter&& rhs) noexcept;
-  ~BasicBloomFilter();
+  ~BasicBloomFilter() = default;
 
   void clear();
   void add(const T& elem);
@@ -31,7 +29,7 @@ class BasicBloomFilter {
   void swap(BasicBloomFilter& rhs);
 
  private:
-  elem_type* _bits;
+  std::vector<bool> _bits;
   size_type _bit_array_size;
   size_type _hash_func_num;
 
@@ -49,7 +47,7 @@ BasicBloomFilter<T>::BasicBloomFilter(double false_positive,
   _bit_array_size = static_cast<size_type>(
       std::ceil(-(capacity * std::log(false_positive) / (ln2 * ln2))));
 
-  _bits = new elem_type[_bit_array_size]();
+  _bits = std::vector<bool>(_bit_array_size, false);
 
   double fractor =
       static_cast<double>(_bit_array_size) / static_cast<double>(capacity);
@@ -58,10 +56,9 @@ BasicBloomFilter<T>::BasicBloomFilter(double false_positive,
 
 template <typename T>
 BasicBloomFilter<T>::BasicBloomFilter(BasicBloomFilter&& rhs) noexcept
-    : _bits(rhs._bits),
+    : _bits(std::move(rhs._bits)),
       _bit_array_size(rhs._bit_array_size),
       _hash_func_num(rhs._hash_func_num) {
-  rhs._bits = nullptr;
   rhs._bit_array_size = 0;
   rhs._hash_func_num = 0;
 }
@@ -70,11 +67,10 @@ template <typename T>
 BasicBloomFilter<T>& BasicBloomFilter<T>::operator=(
     BasicBloomFilter&& rhs) noexcept {
   if (this != &rhs) {
-    _bits = rhs._bits;
+    _bits = std::move(rhs._bits);
     _bit_array_size = rhs._bit_array_size;
     _hash_func_num = rhs._hash_func_num;
 
-    rhs._bits = nullptr;
     rhs._bit_array_size = 0;
     rhs._hash_func_num = 0;
   }
@@ -82,21 +78,16 @@ BasicBloomFilter<T>& BasicBloomFilter<T>::operator=(
 }
 
 template <typename T>
-BasicBloomFilter<T>::~BasicBloomFilter() {
-  delete[] _bits;
-}
-
-template <typename T>
 void BasicBloomFilter<T>::clear() {
-  delete[] _bits;
-  _bits = new elem_type[_bit_array_size]();
+  _bits.clear();
+  _bits = std::vector<bool>(_bit_array_size, false);
 }
 
 template <typename T>
 void BasicBloomFilter<T>::add(const T& elem) {
   for (size_type i = 0; i < _hash_func_num; ++i) {
     size_type hash_val = hash_at_n(&elem, i);
-    _bits[hash_val] |= 1;
+    _bits[hash_val] = true;
   }
 }
 
@@ -104,7 +95,7 @@ template <typename T>
 bool BasicBloomFilter<T>::contains(const T& elem) const {
   for (size_type i = 0; i < _hash_func_num; ++i) {
     size_type hash_val = hash_at_n(&elem, i);
-    if (!(_bits[hash_val] & 1)) {
+    if (_bits[hash_val] != true) {
       return false;
     }
   }
