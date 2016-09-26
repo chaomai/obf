@@ -18,7 +18,8 @@ class OrdinalBloomFilter {
  public:
   using size_type = std::uint64_t;
 
-  OrdinalBloomFilter(double false_positive, size_type capacity);
+  OrdinalBloomFilter(size_type bit_array_size, size_type hash_func_num);
+  // OrdinalBloomFilter(double false_positive, size_type capacity);
   OrdinalBloomFilter(const OrdinalBloomFilter& rhs) = delete;
   OrdinalBloomFilter(OrdinalBloomFilter&& rhs) noexcept;
   OrdinalBloomFilter& operator=(const OrdinalBloomFilter& rhs) = delete;
@@ -40,22 +41,29 @@ class OrdinalBloomFilter {
 };
 
 template <typename T>
-OrdinalBloomFilter<T>::OrdinalBloomFilter(double false_positive,
-                                          size_type capacity) {
-  if (false_positive <= 0 || false_positive >= 1) {
-    throw std::range_error("false positive is invalie.");
-  }
-
-  double ln2 = std::log(2);
-  _bit_array_size = static_cast<size_type>(
-      std::ceil(-(capacity * std::log(false_positive) / (ln2 * ln2))));
-
-  _bits = std::vector<elem_type>(_bit_array_size, 0);
-
-  double fractor =
-      static_cast<double>(_bit_array_size) / static_cast<double>(capacity);
-  _hash_func_num = static_cast<size_type>(std::round(fractor * ln2));
+OrdinalBloomFilter<T>::OrdinalBloomFilter(size_type bit_array_size,
+                                          size_type hash_func_num)
+    : _bit_array_size(bit_array_size), _hash_func_num(hash_func_num) {
+  _bits = std::vector<elem_type>(_bit_array_size, false);
 }
+
+// template <typename T>
+// OrdinalBloomFilter<T>::OrdinalBloomFilter(double false_positive,
+// size_type capacity) {
+// if (false_positive <= 0 || false_positive >= 1) {
+// throw std::range_error("false positive is invalie.");
+// }
+
+// double ln2 = std::log(2);
+// _bit_array_size = static_cast<size_type>(
+// std::ceil(-(capacity * std::log(false_positive) / (ln2 * ln2))));
+
+// _bits = std::vector<elem_type>(_bit_array_size, 0);
+
+// double fractor =
+// static_cast<double>(_bit_array_size) / static_cast<double>(capacity);
+// _hash_func_num = static_cast<size_type>(std::round(fractor * ln2));
+// }
 
 template <typename T>
 OrdinalBloomFilter<T>::OrdinalBloomFilter(OrdinalBloomFilter&& rhs) noexcept

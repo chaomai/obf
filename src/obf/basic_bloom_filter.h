@@ -16,7 +16,8 @@ class BasicBloomFilter {
  public:
   using size_type = std::uint64_t;
 
-  BasicBloomFilter(double false_positive, size_type capacity);
+  BasicBloomFilter(size_type bit_array_size, size_type hash_func_num);
+  // BasicBloomFilter(double false_positive, size_type capacity);
   BasicBloomFilter(const BasicBloomFilter& rhs) = delete;
   BasicBloomFilter(BasicBloomFilter&& rhs) noexcept;
   BasicBloomFilter& operator=(const BasicBloomFilter& rhs) = delete;
@@ -37,22 +38,29 @@ class BasicBloomFilter {
 };
 
 template <typename T>
-BasicBloomFilter<T>::BasicBloomFilter(double false_positive,
-                                      size_type capacity) {
-  if (false_positive <= 0 || false_positive >= 1) {
-    throw std::range_error("false positive is invalie.");
-  }
-
-  double ln2 = std::log(2);
-  _bit_array_size = static_cast<size_type>(
-      std::ceil(-(capacity * std::log(false_positive) / (ln2 * ln2))));
-
+BasicBloomFilter<T>::BasicBloomFilter(size_type bit_array_size,
+                                      size_type hash_func_num)
+    : _bit_array_size(bit_array_size), _hash_func_num(hash_func_num) {
   _bits = std::vector<bool>(_bit_array_size, false);
-
-  double fractor =
-      static_cast<double>(_bit_array_size) / static_cast<double>(capacity);
-  _hash_func_num = static_cast<size_type>(std::round(fractor * ln2));
 }
+
+// template <typename T>
+// BasicBloomFilter<T>::BasicBloomFilter(double false_positive,
+// size_type capacity) {
+// if (false_positive <= 0 || false_positive >= 1) {
+// throw std::range_error("false positive is invalie.");
+// }
+
+// double ln2 = std::log(2);
+// _bit_array_size = static_cast<size_type>(
+// std::ceil(-(capacity * std::log(false_positive) / (ln2 * ln2))));
+
+// _bits = std::vector<bool>(_bit_array_size, false);
+
+// double fractor =
+// static_cast<double>(_bit_array_size) / static_cast<double>(capacity);
+// _hash_func_num = static_cast<size_type>(std::round(fractor * ln2));
+// }
 
 template <typename T>
 BasicBloomFilter<T>::BasicBloomFilter(BasicBloomFilter&& rhs) noexcept
